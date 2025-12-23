@@ -1,6 +1,7 @@
 # qa-playwright-project
 🧪 End-to-End Test Suite
 
+Playwright E2E Automation Framework for Web Applications
 
 <!-- Wy to run Playwright tests -->
 <!-- --------------------------------------- -->
