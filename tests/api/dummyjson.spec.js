@@ -1,4 +1,4 @@
-import { test, expect, request } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 const BASE_URL = 'https://dummyjson.com/auth';
 
@@ -6,6 +6,24 @@ let DATA_USR_PAS = {
     "username": "emilys",
     "password": "emilyspass"
 };
+
+const loginData = [
+    {
+        title: "valid credentials",
+        payload: { username: "emilys", password: "emilyspass" },
+        expectedStatus: 200
+    },
+    {
+        title: "invalid password",
+        payload: { username: "emilys", password: "wrongpass" },
+        expectedStatus: 400
+    },
+    {
+        title: "missing password",
+        payload: { username: "emilys" },
+        expectedStatus: 400
+    }
+];
 
 let accessToken;
 let refreshToken
@@ -20,10 +38,10 @@ async function getProtected(request, url)
     if (response.status() === 401)
     {
         console.log("Access token expired, refreshing...");
-        await refreshAccessToken();
+        await refreshAccessToken(request);
 
         // Retry
-        response = await playwrightRequest.get(url, {
+        response = await request.get(url, {
             headers: { Authorization: `Bearer ${accessToken}` }
         });
     }
@@ -32,9 +50,9 @@ async function getProtected(request, url)
 }
 
 // Helper to refresh token
-async function refreshAccessToken()
+async function refreshAccessToken(request)
 {
-    const response = await playwrightRequest.post(
+    const response = await request.post(
         "https://dummyjson.com/auth/refresh",
         {
             headers: { "Content-Type": "application/json" },
@@ -89,6 +107,26 @@ test.describe('dummyjson API tests', () =>
         const user = await response.json();
         expect(user.username).toBe("emilys");
     });
+
+    loginData.forEach(({ title, payload, expectedStatus }) =>
+    {
+        test(`Login – ${title}`, async ({ request }) =>
+        {
+            const response = await request.post(
+                "https://dummyjson.com/auth/login",
+                {
+                    headers: { "Content-Type": "application/json" },
+                    data: payload
+                }
+            );
+
+            expect(response.status()).toBe(expectedStatus);
+        });
+
+
+    });
 });
+
+
 
 
